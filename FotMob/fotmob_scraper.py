@@ -5,6 +5,7 @@
 # imports
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+import pandas as pd
 
 ## defining user agent is mandatory
 #user_agent_string = "define_a_user_agent_string"
