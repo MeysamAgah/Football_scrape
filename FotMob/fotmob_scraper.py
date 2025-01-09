@@ -42,3 +42,32 @@ def scrape_urls(competition, season):
 
   driver.quit()
   return match_urls
+
+def scrape_stats(match_url):
+  """
+  arguments: match url in string
+  """
+  stats_url = match_url + ':tab=stats'
+  driver = web_driver()
+  driver.get(match_url)
+
+  stats = []
+  home = []
+  away = []
+
+  for element in driver.find_elements(By.CSS_SELECTOR, '.css-9e8ls0-TopStatsContainer .css-1l9ti9s-Stat'):
+    for ele in element.find_elements(By.CLASS_NAME, 'title'):
+      stats.append(ele.text)
+    for ele in element.find_elements(By.CLASS_NAME, 'css-129ncdm-StatBox'):
+      home.append(ele.text)
+    for ele in element.find_elements(By.CLASS_NAME, 'css-1t9answ-StatBox'):
+      away.append(ele.text)
+
+  dataframe = pd.DataFrame(
+      {
+          'stats': stats,
+          'home': home,
+          'away': away
+      }
+  )
+  return dataframe
