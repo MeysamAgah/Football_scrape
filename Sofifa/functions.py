@@ -55,3 +55,60 @@ def find_versions():
     df = pd.concat([df, df_temp], ignore_index=True)
 
   return df
+
+def scrape_leagues(version):
+  """
+  arguments: version (string)
+  this will result dataframe consist of all leagues information
+  """
+  driver = web_driver()
+  url = f"https://sofifa.com/leagues?r={version}&set=true"
+  driver.get(url)
+
+  table = driver.find_elements(By.TAG_NAME, 'td')
+
+  league_urls =[]
+  league_names = []
+  country_names = []
+  num_teams = []
+  num_players = []
+  num_added_players = []
+  num_updated_players = []
+  num_removed_players = []
+  
+  for i in range(len(table)):
+    if i%8==0:
+      pass
+    elif i%8==1:
+      league_urls.append(a[i].find_element(By.TAG_NAME, 'a').get_attribute('href'))
+      league_names.append(a[i].text.split('\n')[0])
+      country_names.append(a[i].text.split('\n')[1])
+    elif i%8==2:
+      num_teams.append(a[i].text)
+    elif i%8==3:
+      num_players.append(a[i].text)
+    elif i%8==4:
+      num_added_players.append(a[i].text)
+    elif i%8==5:
+      num_updated_players.append(a[i].text)  
+    elif i%8==6:
+      num_removed_players.append(a[i].text)  
+    else:
+      pass
+
+  driver.quit()
+    
+  df = pd.DataFrame(
+      {
+          'league_urls': league_urls,
+          'league_names': league_names,
+          'country_names': country_names,
+          'num_teams': num_teams,
+          'num_players': num_players,
+          'num_added_players': num_added_players,
+          'num_updated_players': num_updated_players,
+          'num_removed_players': num_removed_players
+      }
+  )
+
+  return df
