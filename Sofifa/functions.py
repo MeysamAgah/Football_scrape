@@ -113,6 +113,39 @@ def scrape_leagues(version):
 
   return df
 
+def scrape_teams(league_url, version='250016'):
+  """
+  argumets:
+    league_url (string): url of league for example: 'https://sofifa.com/league/13'
+    version (string): version of sofifa
+  this will result dataframe consist of all teams information in selected league
+  columns:
+    team: indicate team name (string)
+    overall: a number indicating overall score of team
+  """
+  #initializing webscrapping
+  driver = web_driver()
+  driver.get(league_url)
+
+  teams = []
+  overalls = []
+  urls = []
+
+  for e in driver.find_elements(By.CLASS_NAME, "ellipsis")[1:]:
+    teams.append(e.text.split('\n')[0])
+    overalls.append(e.text.split('\n')[1])
+    urls.append(e.find_elements(By.TAG_NAME, 'a')[1].get_attribute('href') + f"?r={version}&set=true")
+
+  df = pd.DataFrame(
+      {
+          'team': teams,
+          'overall': overalls,
+          'urls': urls
+      }
+  )
+
+  return df
+
 def scrape_player(player_url, version='250016'):
   """
   argumets:
