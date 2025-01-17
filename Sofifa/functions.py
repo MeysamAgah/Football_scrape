@@ -229,6 +229,97 @@ def player_features_dict():
 
     return feature_mapping_dict
 
+def scrape_players(team_url, version='250016', feature_mode='all', features=None, player_mode='all'):
+  """
+  argumets:
+    team_url (string): url of team for example: 'https://sofifa.com/team/10/manchester-city'
+    version (string): version of sofifa
+    feature_mode (string):
+      "all": output all possible features
+      "include": output a list of given features
+      "exclude": output all possible features except list of given features
+    features (list): list of given features
+    *** You don'y need to modify this argument if feature_mode is set on "all" ***
+    player_mode (string):
+      "all": will consider all players of team including squad players and loan players
+      "squad": will consider only squad players
+      "loan": will consider only loan players
+  this will result dataframe consist of all players information in selected team
+  columns: desired features 
+  """
+  feature_mapping_dict = player_features_dict()
+  
+  # considering different situations for how to output playerrs features
+  if feature_mode == 'all':
+    features = list(feature_mapping_dict.keys())
+  elif feature_mode == 'include':
+    features = list(set(feature_mapping_dict.keys()) & set(features))
+  elif feature_mode == 'exclude':
+    features = list(set(feature_mapping_dict.keys()) - set(features))
+  else:
+    raise ValueError("feature_mode must be 'all', 'include' or 'exclude'")
+
+  # considering different situations for how to select players
+  if player_mode == 'all':
+    xpath = "/html/body/main[2]/article" 
+  elif player_mode == 'squad':
+    xpath = "/html/body/main[2]/article/table[1]"
+  elif player_mode == 'loan':
+    xpath = "/html/body/main[2]/article/table[2]"
+  else:
+    raise ValueError("player_mode must be 'all', 'squad' or 'loan'")
+
+  # finding desired url
+  base_url = team_url
+  url_version_adder = f"/?r={version}&set=true" #this part specifies version of table
+  base_feature_adder = "&showCol%5B%5D=" # this part is in url after specifying each position included on table
+  final_url = base_url + url_version_adder
+  for f in features:
+    final_url += base_feature_adder + feature_mapping_dict[f]
+  
+  # initializing webscrapping
+  driver = web_driver()
+  driver.get(final_url)
+
+  # getting basic information
+  player_elements1 = driver.find_elements(By.XPATH, xpath + '//a[contains(@href, "/player/")]')
+  player_names = []
+  player_full_names = []
+  player_urls = []
+
+  for player in player_elements1:
+    player_name = player.text  # Extract the displayed name
+    player_full_name = player.get_attribute('data-tippy-content')  # Full name from attribute
+    player_url = player.get_attribute('href')  # Full URL
+    player_names.append(player_name)
+    player_full_names.append(player_full_name)
+    player_urls.append(player_url)
+
+  player_elements2 = driver.find_elements(By.XPATH, xpath + '//img[contains(@class, "flag")]')
+  countries = []
+
+  for player in player_elements2:
+    countries.append(player.get_attribute('title'))
+
+  # forming up a base dataframe
+  df = pd.DataFrame(
+      {
+          'player_names': player_names,
+          'player_full_names': player_full_names,
+          'player_urls': player_urls,
+          'countries': countries,
+      }
+  )
+
+  # adding desired features
+  for f in features:
+    val = feature_mapping_dict[f]
+    td_elements = driver.find_elements(By.XPATH, xpath + f'//td[@data-col="{val}"]')
+    values = [element.text for element in td_elements]
+    df[f] = values
+
+  return df
+
 def scrape_player(player_url, version='250016'):
   """
   argumets:
