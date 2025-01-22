@@ -318,6 +318,8 @@ def scrape_players(team_url, version='250016', feature_mode='all', features=None
     values = [element.text for element in td_elements]
     df[f] = values
 
+  df['version'] = version
+    
   return df
 
 def scrape_player(player_url, version='250016'):
