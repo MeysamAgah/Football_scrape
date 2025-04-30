@@ -909,3 +909,29 @@ def scrape_players2(league_ids, offset_num, type_='all', version='250016', featu
   df['version'] = version
 
   return df
+
+def find_lineup(team_url):
+  # initializing web scrapping
+  driver = web_driver()
+  url = "https://sofifa.com/team/10/manchester-city/?r=250001&set=true"
+  driver.get(url)
+
+  # getting required elements
+  positions = []
+  players = []
+  lineup_element = driver.find_element(By.CLASS_NAME, "lineup")
+  
+  # get positions
+  elements1 = a.find_elements(By.CLASS_NAME, 'pos')
+  for e in elements1:
+    positions.append(e.text)
+
+  # get player names
+  elements2 = lineup_element.find_elements(By.CLASS_NAME, 'field-basket')
+  for e in elements2:
+    element = e.find_element(By.CLASS_NAME, 'nowrap')
+    players.append(" ".join(element.text.split(" ")[1:]))
+
+  driver.quit()
+  
+  return positions, players
